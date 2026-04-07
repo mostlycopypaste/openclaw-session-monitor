@@ -2,7 +2,7 @@
 
 import pytest
 from pathlib import Path
-from src.session_parser import parse_sessions_metadata
+from src.session_parser import parse_sessions_metadata, parse_session_messages
 
 
 def test_parse_sessions_metadata(tmp_path):
@@ -55,3 +55,50 @@ def test_parse_sessions_filters_archived(tmp_path):
 
     assert len(sessions) == 1
     assert sessions[0]["sessionId"] == "test-001"
+
+def test_parse_session_messages(tmp_path):
+    """Test parsing session JSONL returns messages with tokens."""
+    session_file = tmp_path / "test.jsonl"
+    session_file.write_text(
+        '{"type":"message","id":"msg-001","timestamp":"2026-04-07T10:00:00Z","role":"user","message":{"content":"test","usage":{"totalTokens":1234}}}\n'
+        '{"type":"message","id":"msg-002","timestamp":"2026-04-07T10:00:05Z","role":"assistant","message":{"content":"response","usage":{"totalTokens":5678}}}\n'
+    )
+
+    messages = parse_session_messages(session_file)
+
+    assert len(messages) == 2
+    assert messages[0]["timestamp"] == "2026-04-07T10:00:00Z"
+    assert messages[0]["role"] == "user"
+    assert messages[0]["tokens"] == 1234
+    assert messages[1]["tokens"] == 5678
+
+
+def test_parse_session_messages_handles_missing_usage(tmp_path):
+    """Test parsing handles messages with missing usage field."""
+    session_file = tmp_path / "test.jsonl"
+    session_file.write_text(
+        '{"type":"message","id":"msg-001","timestamp":"2026-04-07T10:00:00Z","role":"user","message":{"content":"test"}}\n'
+        '{"type":"message","id":"msg-002","timestamp":"2026-04-07T10:00:05Z","role":"assistant","message":{"content":"response","usage":{"totalTokens":5678}}}\n'
+    )
+
+    messages = parse_session_messages(session_file)
+
+    assert len(messages) == 2
+    assert messages[0]["tokens"] == 0  # Missing usage defaults to 0
+    assert messages[1]["tokens"] == 5678
+
+
+def test_parse_session_messages_skips_malformed_lines(tmp_path):
+    """Test parsing skips malformed JSONL lines with warning."""
+    session_file = tmp_path / "test.jsonl"
+    session_file.write_text(
+        '{"type":"message","id":"msg-001","timestamp":"2026-04-07T10:00:00Z","role":"user","message":{"content":"test","usage":{"totalTokens":1234}}}\n'
+        'this is not valid json\n'
+        '{"type":"message","id":"msg-003","timestamp":"2026-04-07T10:00:10Z","role":"assistant","message":{"content":"response","usage":{"totalTokens":5678}}}\n'
+    )
+
+    messages = parse_session_messages(session_file)
+
+    assert len(messages) == 2  # Skipped malformed line
+    assert messages[0]["tokens"] == 1234
+    assert messages[1]["tokens"] == 5678
