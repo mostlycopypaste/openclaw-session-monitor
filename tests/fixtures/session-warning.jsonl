@@ -1,0 +1,12 @@
+{"type":"message","id":"msg-w001","timestamp":"2026-04-07T10:15:00Z","role":"user","message":{"content":"start","usage":{"totalTokens":5000}}}
+{"type":"message","id":"msg-w002","timestamp":"2026-04-07T10:15:05Z","role":"assistant","message":{"content":"response","usage":{"totalTokens":15000}}}
+{"type":"message","id":"msg-w003","timestamp":"2026-04-07T10:15:10Z","role":"user","message":{"content":"follow up","usage":{"totalTokens":3000}}}
+{"type":"message","id":"msg-w004","timestamp":"2026-04-07T10:15:15Z","role":"assistant","message":{"content":"detailed","usage":{"totalTokens":20000}}}
+{"type":"message","id":"msg-w005","timestamp":"2026-04-07T10:15:20Z","role":"tool","message":{"content":"results","usage":{"totalTokens":8000}}}
+{"type":"message","id":"msg-w006","timestamp":"2026-04-07T10:15:25Z","role":"assistant","message":{"content":"analysis","usage":{"totalTokens":18000}}}
+{"type":"message","id":"msg-w007","timestamp":"2026-04-07T10:15:30Z","role":"user","message":{"content":"more","usage":{"totalTokens":4000}}}
+{"type":"message","id":"msg-w008","timestamp":"2026-04-07T10:15:35Z","role":"assistant","message":{"content":"comprehensive","usage":{"totalTokens":22000}}}
+{"type":"message","id":"msg-w009","timestamp":"2026-04-07T10:15:40Z","role":"user","message":{"content":"clarify","usage":{"totalTokens":3500}}}
+{"type":"message","id":"msg-w010","timestamp":"2026-04-07T10:15:45Z","role":"assistant","message":{"content":"explanation","usage":{"totalTokens":25000}}}
+{"type":"message","id":"msg-w011","timestamp":"2026-04-07T10:15:50Z","role":"tool","message":{"content":"data","usage":{"totalTokens":10000}}}
+{"type":"message","id":"msg-w012","timestamp":"2026-04-07T10:15:55Z","role":"assistant","message":{"content":"synthesis","usage":{"totalTokens":31500}}}

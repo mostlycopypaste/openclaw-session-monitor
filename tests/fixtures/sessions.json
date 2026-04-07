@@ -1,0 +1,36 @@
+{
+  "sessions": [
+    {
+      "sessionId": "test-active-001",
+      "label": "test:active",
+      "agent": "main",
+      "status": "active",
+      "sessionFile": "session-active.jsonl",
+      "updatedAt": "2026-04-07T10:00:00Z"
+    },
+    {
+      "sessionId": "test-warning-002",
+      "label": "test:warning",
+      "agent": "main",
+      "status": "active",
+      "sessionFile": "session-warning.jsonl",
+      "updatedAt": "2026-04-07T10:15:00Z"
+    },
+    {
+      "sessionId": "test-critical-003",
+      "label": "test:critical",
+      "agent": "main",
+      "status": "active",
+      "sessionFile": "session-critical.jsonl",
+      "updatedAt": "2026-04-07T10:30:00Z"
+    },
+    {
+      "sessionId": "test-archived-004.reset",
+      "label": "test:archived",
+      "agent": "main",
+      "status": "archived",
+      "sessionFile": "session-archived.jsonl",
+      "updatedAt": "2026-04-07T09:00:00Z"
+    }
+  ]
+}

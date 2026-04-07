@@ -1,0 +1,10 @@
+{"type":"message","id":"msg-001","timestamp":"2026-04-07T10:00:00Z","role":"user","message":{"content":"test message","usage":{"totalTokens":1000}}}
+{"type":"message","id":"msg-002","timestamp":"2026-04-07T10:00:05Z","role":"assistant","message":{"content":"response","usage":{"totalTokens":5000}}}
+{"type":"message","id":"msg-003","timestamp":"2026-04-07T10:00:10Z","role":"user","message":{"content":"follow up","usage":{"totalTokens":1200}}}
+{"type":"message","id":"msg-004","timestamp":"2026-04-07T10:00:15Z","role":"assistant","message":{"content":"another response","usage":{"totalTokens":6500}}}
+{"type":"message","id":"msg-005","timestamp":"2026-04-07T10:00:20Z","role":"tool","message":{"content":"tool result","usage":{"totalTokens":3000}}}
+{"type":"message","id":"msg-006","timestamp":"2026-04-07T10:00:25Z","role":"assistant","message":{"content":"synthesis","usage":{"totalTokens":8000}}}
+{"type":"message","id":"msg-007","timestamp":"2026-04-07T10:00:30Z","role":"user","message":{"content":"more questions","usage":{"totalTokens":1500}}}
+{"type":"message","id":"msg-008","timestamp":"2026-04-07T10:00:35Z","role":"assistant","message":{"content":"detailed answer","usage":{"totalTokens":12000}}}
+{"type":"message","id":"msg-009","timestamp":"2026-04-07T10:00:40Z","role":"user","message":{"content":"final question","usage":{"totalTokens":2000}}}
+{"type":"message","id":"msg-010","timestamp":"2026-04-07T10:00:45Z","role":"assistant","message":{"content":"conclusion","usage":{"totalTokens":32000}}}
