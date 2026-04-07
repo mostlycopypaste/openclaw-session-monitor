@@ -53,6 +53,7 @@ Add to `tests/test_cleanup_cli.py`:
 ```python
 """Tests for cleanup CLI command."""
 
+import sys
 import subprocess
 from unittest.mock import patch, MagicMock
 import pytest
@@ -61,7 +62,7 @@ from src.cli import main
 
 def test_cleanup_command_dry_run_calls_openclaw_dry_run():
     """Test cleanup --dry-run calls openclaw sessions cleanup --dry-run."""
-    with patch('src.cli.subprocess.run') as mock_run:
+    with patch('subprocess.run') as mock_run:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout="Cleanup preview:\nWould prune 3 sessions\nTotal: 12.5 MB",
@@ -82,7 +83,7 @@ def test_cleanup_command_dry_run_calls_openclaw_dry_run():
 
 def test_cleanup_command_force_skips_confirmation():
     """Test cleanup --force skips confirmation prompt."""
-    with patch('src.cli.subprocess.run') as mock_run:
+    with patch('subprocess.run') as mock_run:
         # First call: dry-run preview
         # Second call: actual cleanup
         mock_run.side_effect = [
@@ -111,7 +112,7 @@ def test_cleanup_command_force_skips_confirmation():
 
 def test_cleanup_command_interactive_confirmation_yes(monkeypatch):
     """Test cleanup with interactive confirmation (user says yes)."""
-    with patch('src.cli.subprocess.run') as mock_run:
+    with patch('subprocess.run') as mock_run:
         mock_run.side_effect = [
             MagicMock(returncode=0, stdout="Would prune 5 sessions", stderr=""),
             MagicMock(returncode=0, stdout="Pruned 5 sessions", stderr="")
@@ -130,7 +131,7 @@ def test_cleanup_command_interactive_confirmation_yes(monkeypatch):
 
 def test_cleanup_command_interactive_confirmation_no(monkeypatch):
     """Test cleanup with interactive confirmation (user says no)."""
-    with patch('src.cli.subprocess.run') as mock_run:
+    with patch('subprocess.run') as mock_run:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout="Would prune 5 sessions",
@@ -150,7 +151,7 @@ def test_cleanup_command_interactive_confirmation_no(monkeypatch):
 
 def test_cleanup_command_openclaw_not_found():
     """Test cleanup gracefully handles openclaw command not found."""
-    with patch('src.cli.subprocess.run') as mock_run:
+    with patch('subprocess.run') as mock_run:
         mock_run.side_effect = FileNotFoundError("openclaw: command not found")
         
         with patch('sys.argv', ['session-monitor', 'cleanup', '--dry-run']):
@@ -162,7 +163,7 @@ def test_cleanup_command_openclaw_not_found():
 
 def test_cleanup_command_openclaw_error():
     """Test cleanup handles openclaw returning error."""
-    with patch('src.cli.subprocess.run') as mock_run:
+    with patch('subprocess.run') as mock_run:
         mock_run.return_value = MagicMock(
             returncode=1,
             stdout="",
@@ -186,7 +187,7 @@ pytest tests/test_cleanup_cli.py -v
 
 Modify `src/cli.py`:
 
-At top of file, add subprocess import:
+At top of file (after other imports around line 6), add subprocess import:
 ```python
 import subprocess
 ```
@@ -217,8 +218,6 @@ At end of file, add cleanup command implementation:
 ```python
 def cmd_cleanup(args):
     """Execute cleanup command via OpenClaw CLI."""
-    import subprocess
-    
     # Step 1: Always run dry-run first to preview
     print("Checking for sessions to clean up...")
     print()
@@ -348,14 +347,14 @@ cat README.md | head -50
 
 - [ ] **Step 2: Add cleanup documentation to README**
 
-In `README.md`, find the "Commands" or "Usage" section and add:
+In `README.md`, find the "Commands" or "Usage" section (after the "Historical Metrics" section) and add:
 
 ```markdown
 ### Cleanup Old Sessions
 
 Clean up old session files using OpenClaw's native cleanup mechanism:
 
-```bash
+\`\`\`bash
 # Preview what would be cleaned (no changes made)
 session-monitor cleanup --dry-run
 
@@ -364,7 +363,7 @@ session-monitor cleanup
 
 # Force cleanup without confirmation
 session-monitor cleanup --force
-```
+\`\`\`
 
 **How it works:**
 - Delegates to OpenClaw's `openclaw sessions cleanup` command
