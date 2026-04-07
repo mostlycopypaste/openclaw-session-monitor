@@ -7,49 +7,51 @@ from src.session_parser import parse_sessions_metadata, parse_session_messages
 
 def test_parse_sessions_metadata(tmp_path):
     """Test parsing sessions.json returns session metadata."""
+    # Create actual session file so existence check passes
+    session_file = tmp_path / "test-001.jsonl"
+    session_file.write_text('{"type":"message","message":{"usage":{"totalTokens":100}}}\n')
+
     sessions_file = tmp_path / "sessions.json"
-    sessions_file.write_text("""{
-  "sessions": [
-    {
-      "sessionId": "test-001",
-      "label": "main:test",
-      "agent": "main",
-      "status": "active",
-      "sessionFile": "test-001.jsonl"
-    }
-  ]
-}""")
+    sessions_file.write_text(f"""{{
+  "agent:main:test": {{
+    "sessionId": "test-001",
+    "sessionFile": "{session_file}",
+    "status": "active"
+  }}
+}}""")
 
     sessions = parse_sessions_metadata(sessions_file)
 
     assert len(sessions) == 1
     assert sessions[0]["sessionId"] == "test-001"
-    assert sessions[0]["label"] == "main:test"
+    assert sessions[0]["label"] == "agent:main:test"
     assert sessions[0]["agent"] == "main"
-    assert sessions[0]["sessionFile"] == "test-001.jsonl"
+    assert sessions[0]["sessionFile"] == str(session_file)
 
 
 def test_parse_sessions_filters_archived(tmp_path):
     """Test parsing sessions.json filters out archived sessions."""
+    # Create actual session files
+    active_file = tmp_path / "test-001.jsonl"
+    active_file.write_text('{"type":"message","message":{"usage":{"totalTokens":100}}}\n')
+
+    # Archived file should have .reset in filename
+    archived_file = tmp_path / "test-002.reset.jsonl"
+    archived_file.write_text('{"type":"message","message":{"usage":{"totalTokens":200}}}\n')
+
     sessions_file = tmp_path / "sessions.json"
-    sessions_file.write_text("""{
-  "sessions": [
-    {
-      "sessionId": "test-001",
-      "label": "active",
-      "agent": "main",
-      "status": "active",
-      "sessionFile": "test-001.jsonl"
-    },
-    {
-      "sessionId": "test-002.reset",
-      "label": "archived",
-      "agent": "main",
-      "status": "archived",
-      "sessionFile": "test-002.jsonl"
-    }
-  ]
-}""")
+    sessions_file.write_text(f"""{{
+  "agent:main:active": {{
+    "sessionId": "test-001",
+    "sessionFile": "{active_file}",
+    "status": "active"
+  }},
+  "agent:main:archived": {{
+    "sessionId": "test-002",
+    "sessionFile": "{archived_file}",
+    "status": "archived"
+  }}
+}}""")
 
     sessions = parse_sessions_metadata(sessions_file)
 

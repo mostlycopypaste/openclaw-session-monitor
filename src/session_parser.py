@@ -24,17 +24,37 @@ def parse_sessions_metadata(sessions_file: Path) -> List[Dict[str, Any]]:
     with open(sessions_file, 'r') as f:
         data = json.load(f)
 
-    sessions = data.get('sessions', [])
+    # OpenClaw sessions.json is a dict with keys like "agent:main:main"
+    # Each value is a session object
+    sessions = []
 
-    # Filter out archived sessions
-    active_sessions = [
-        s for s in sessions
-        if s.get('status') == 'active'
-        and not s.get('sessionId', '').endswith('.reset')
-        and not s.get('sessionId', '').endswith('.deleted')
-    ]
+    for label, session_data in data.items():
+        # Skip if no sessionFile or sessionId
+        if 'sessionFile' not in session_data or 'sessionId' not in session_data:
+            continue
 
-    return active_sessions
+        session_file = session_data['sessionFile']
+
+        # Filter out archived sessions (those with .reset or .deleted in filename)
+        if '.reset' in session_file or '.deleted' in session_file:
+            continue
+
+        # Check if session file actually exists
+        session_path = Path(session_file)
+        if not session_path.exists():
+            continue
+
+        # Extract agent name from label (e.g., "agent:main:main" -> "main")
+        agent = label.split(':')[1] if ':' in label else 'unknown'
+
+        sessions.append({
+            'sessionId': session_data['sessionId'],
+            'label': label,
+            'agent': agent,
+            'sessionFile': session_file,
+        })
+
+    return sessions
 
 
 def parse_session_messages(session_file: Path) -> List[Dict[str, Any]]:

@@ -63,16 +63,19 @@ class SessionMonitor:
             # Process each active session
             for metadata in sessions_metadata:
                 session_id = metadata['sessionId']
-                session_file = sessions_dir / metadata['sessionFile']
+                # sessionFile is an absolute path in real OpenClaw sessions.json
+                session_file = Path(metadata['sessionFile'])
 
                 if not session_file.exists():
                     logger.warning(f"Session file not found: {session_file}")
                     continue
 
-                # Parse messages and calculate total tokens
+                # Parse messages and get current context size
+                # Note: totalTokens is cumulative (includes full context at that point),
+                # so we take the max (most recent) value, not sum all messages
                 try:
                     messages = parse_session_messages(session_file)
-                    total_tokens = sum(msg['tokens'] for msg in messages)
+                    total_tokens = max((msg['tokens'] for msg in messages), default=0)
 
                     # Create Session object
                     session = Session(
