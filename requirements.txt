@@ -1,0 +1,10 @@
+# Core dependencies
+watchdog>=4.0.0
+rich>=13.0.0
+jsonlines>=4.0.0
+
+# Development dependencies
+pytest>=7.0.0
+pytest-cov>=4.0.0
+black>=23.0.0
+ruff>=0.1.0
