@@ -102,3 +102,33 @@ def test_parse_session_messages_skips_malformed_lines(tmp_path):
     assert len(messages) == 2  # Skipped malformed line
     assert messages[0]["tokens"] == 1234
     assert messages[1]["tokens"] == 5678
+
+
+def test_parse_session_messages_incremental(tmp_path):
+    """Test incremental parsing returns only new messages and updated position."""
+    from src.session_parser import parse_session_messages_incremental
+    
+    session_file = tmp_path / "test.jsonl"
+    
+    # Write initial messages
+    session_file.write_text(
+        '{"type":"message","id":"msg-001","timestamp":"2026-04-07T10:00:00Z","role":"user","message":{"usage":{"totalTokens":1000}}}\n'
+        '{"type":"message","id":"msg-002","timestamp":"2026-04-07T10:00:05Z","role":"assistant","message":{"usage":{"totalTokens":2000}}}\n'
+    )
+    
+    # First read - should get all messages
+    messages, pos = parse_session_messages_incremental(session_file, start_pos=0)
+    assert len(messages) == 2
+    assert messages[0]["tokens"] == 1000
+    assert messages[1]["tokens"] == 2000
+    assert pos > 0  # Position updated
+    
+    # Append new message
+    with open(session_file, 'a') as f:
+        f.write('{"type":"message","id":"msg-003","timestamp":"2026-04-07T10:00:10Z","role":"user","message":{"usage":{"totalTokens":3000}}}\n')
+    
+    # Second read from last position - should only get new message
+    new_messages, new_pos = parse_session_messages_incremental(session_file, start_pos=pos)
+    assert len(new_messages) == 1
+    assert new_messages[0]["tokens"] == 3000
+    assert new_pos > pos  # Position advanced
