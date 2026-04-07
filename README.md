@@ -2,6 +2,17 @@
 
 Real-time token usage monitoring for OpenClaw sessions. Avoid unexpected context window limits with live visibility into what's consuming your 200K token budget.
 
+## Status: MVP Ready 🚀
+
+Core functionality is implemented and working:
+- ✅ Session discovery and token counting
+- ✅ Live dashboard with color-coded alerts
+- ✅ Multi-session monitoring
+- ✅ Warning/critical thresholds (80%/90%)
+- ✅ Incremental file parsing for efficiency
+- 🚧 File watcher (currently polling every 1s)
+- 🚧 Historical metrics and analysis (planned)
+
 ## Features
 
 - **Real-time monitoring**: See token usage within 1 second of message completion
@@ -15,17 +26,17 @@ Real-time token usage monitoring for OpenClaw sessions. Avoid unexpected context
 
 ```bash
 # Clone and install
-git clone https://github.com/user/openclaw-session-monitor
+git clone git@github.com:mostlycopypaste/openclaw-session-monitor.git
 cd openclaw-session-monitor
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install -e ".[dev]"
 
 # Start monitoring
 session-monitor watch
 
-# Analyze a session
-session-monitor analyze <session-id> --report
+# Specify custom OpenClaw state directory (if needed)
+session-monitor watch --state-dir ~/.openclaw-primary
 ```
 
 ## Requirements
