@@ -83,6 +83,7 @@ class SessionMonitor:
                         label=metadata['label'],
                         agent=metadata['agent'],
                         total_tokens=total_tokens,
+                        created_at=metadata.get('startedAt'),
                         context_limit=self.context_limit
                     )
 

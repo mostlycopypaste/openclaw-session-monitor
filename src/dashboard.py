@@ -77,15 +77,25 @@ class Dashboard:
 
     def _render_rich_ui(self, sessions: Dict[str, Session]) -> str:
         """Render dashboard with rich terminal UI."""
-        # Create session table
-        table = Table(title="OpenClaw Session Monitor", show_header=True)
+        # Create session table with total count in title
+        total_sessions = len(sessions)
+        title = f"OpenClaw Session Monitor ({total_sessions} sessions)"
+        table = Table(title=title, show_header=True)
         table.add_column("Session ID", style="cyan")
         table.add_column("Label", style="white")
+        table.add_column("Age", justify="right", style="dim")
         table.add_column("Tokens", justify="right", style="yellow")
         table.add_column("Window %", justify="right")
         table.add_column("Alert", style="bold")
 
-        for session_id, session in sorted(sessions.items()):
+        # Sort by window percent descending (highest usage first)
+        sorted_sessions = sorted(
+            sessions.values(),
+            key=lambda s: s.window_percent,
+            reverse=True
+        )
+
+        for session in sorted_sessions:
             # Determine alert color
             if session.alert_level == "critical":
                 alert_style = "bold red"
@@ -107,8 +117,9 @@ class Dashboard:
                 percent_style = "green"
 
             table.add_row(
-                session_id[:12],
+                session.session_id[:12],
                 session.label,
+                session.format_age(),
                 f"{session.total_tokens:,}",
                 f"[{percent_style}]{percent:.1f}%[/{percent_style}]",
                 f"[{alert_style}]{alert_text}[/{alert_style}]"

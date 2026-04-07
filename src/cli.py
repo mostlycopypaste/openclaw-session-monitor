@@ -22,7 +22,7 @@ def main():
     watch_parser = subparsers.add_parser("watch", help="Start live monitoring dashboard")
     watch_parser.add_argument("--agent", help="Monitor specific agent only")
     watch_parser.add_argument("--simple", action="store_true", help="Simple output (no colors)")
-    watch_parser.add_argument("--refresh-rate", type=float, default=1.0, help="Dashboard refresh rate in seconds")
+    watch_parser.add_argument("--refresh-rate", type=float, default=2.0, help="Dashboard refresh rate in seconds")
     watch_parser.add_argument("--state-dir", help="Override OpenClaw state directory")
 
     # Analyze command

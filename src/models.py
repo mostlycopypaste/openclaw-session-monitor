@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from typing import Optional
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -12,6 +13,7 @@ class Session:
     label: str
     agent: str
     total_tokens: int
+    created_at: Optional[int] = None  # Unix timestamp in milliseconds
     context_limit: int = 200000
 
     @property
@@ -31,6 +33,33 @@ class Session:
             return "warning"
         else:
             return "none"
+
+    @property
+    def age_seconds(self) -> Optional[int]:
+        """Calculate session age in seconds."""
+        if self.created_at is None:
+            return None
+        current_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+        age_ms = current_ms - self.created_at
+        return age_ms // 1000
+
+    def format_age(self) -> str:
+        """Format age as human-readable string."""
+        age = self.age_seconds
+        if age is None:
+            return "Unknown"
+
+        if age < 60:
+            return f"{age}s"
+        elif age < 3600:
+            mins = age // 60
+            return f"{mins}m"
+        elif age < 86400:
+            hours = age // 3600
+            return f"{hours}h"
+        else:
+            days = age // 86400
+            return f"{days}d"
 
 
 @dataclass
