@@ -1,8 +1,12 @@
 """CLI entry point for session-monitor command."""
 
 import sys
+import os
 import argparse
+import time
 from pathlib import Path
+from src.monitor import SessionMonitor
+from src.dashboard import Dashboard
 
 
 def main():
@@ -51,10 +55,61 @@ def main():
         parser.print_help()
         return 1
 
-    # Phase 1: Not implemented yet
-    print(f"Command '{args.command}' not yet implemented.")
-    print("See PLAN.md for implementation phases.")
-    return 1
+    if args.command == "watch":
+        return cmd_watch(args)
+    else:
+        print(f"Command '{args.command}' not yet implemented.")
+        print("See PLAN.md for implementation phases.")
+        return 1
+
+
+def cmd_watch(args):
+    """Execute watch command to monitor sessions in real-time."""
+    # Determine state directory
+    state_dir = args.state_dir
+    if not state_dir:
+        # Try environment variable first
+        state_dir = os.environ.get('OPENCLAW_STATE_DIR')
+        if not state_dir:
+            # Default location
+            state_dir = Path.home() / '.openclaw-primary'
+        else:
+            state_dir = Path(state_dir)
+    else:
+        state_dir = Path(state_dir)
+
+    if not state_dir.exists():
+        print(f"Error: OpenClaw state directory not found: {state_dir}")
+        print("Set OPENCLAW_STATE_DIR environment variable or use --state-dir")
+        return 1
+
+    # Initialize monitor and dashboard
+    monitor = SessionMonitor(state_dir=state_dir)
+    dashboard = Dashboard(test_mode=False)
+
+    # Discover initial sessions
+    print(f"Monitoring OpenClaw sessions at {state_dir}")
+    print("Press Ctrl+C to exit\n")
+
+    try:
+        # Simple polling loop (Task 7 file watcher would make this real-time)
+        while True:
+            monitor.discover_sessions()
+
+            # Clear screen and display dashboard
+            dashboard.console.clear()
+
+            if monitor.sessions:
+                output = dashboard._render_rich_ui(monitor.sessions)
+                dashboard.console.print(output)
+            else:
+                print("No active sessions found")
+
+            time.sleep(args.refresh_rate)
+
+    except KeyboardInterrupt:
+        print("\nMonitoring stopped")
+        return 0
 
 
 if __name__ == "__main__":
