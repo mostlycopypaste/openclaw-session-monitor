@@ -17,6 +17,8 @@ Core functionality is implemented and working:
 
 - **Real-time monitoring**: See token usage within 1 second of message completion
 - **Multi-session dashboard**: Monitor all agents simultaneously (main, claude, rescue)
+- **Session status tracking**: Visual indicators for active (RUNNING) vs completed (DONE) sessions
+- **Smart sorting**: Active sessions approaching limits float to top, prioritized by usage
 - **Proactive alerts**: Warnings at 80%, critical at 90% context window
 - **Compaction detection**: Track when and how effective compaction runs are
 - **Token analysis**: Identify expensive operations and optimize workflows
@@ -61,10 +63,28 @@ session-monitor watch --simple
 ```
 
 Dashboard shows:
-- Session table with token counts and percentages
-- Live message stream with token deltas
+- Session table with:
+  - **Status column**: RUNNING (active), DONE (completed), or — (null/active)
+  - Token counts and window percentages
+  - Session age (how long since creation)
+  - Color-coded alerts (OK/WARNING/CRITICAL)
+- **Smart sorting**: Active sessions appear first, sorted by usage (highest % at top)
+- Live updates every second
 - Alerts when approaching context limit
 - Compaction event detection
+
+**Example Dashboard:**
+
+```
+┌─ OpenClaw Session Monitor (3 sessions) ─────────────────────────────────┐
+│ Session ID    Label              Status   Age  Tokens    Window %  Alert │
+│ 5f3febb2-ebd  main:heartbeat     RUNNING  2m   145,234   72.6%     OK    │
+│ 9e1a5a15-ad3  claude:review      —        30s   12,456    6.2%     OK    │
+│ 3b8c1f27-9a1  main:completed     DONE     5m    98,123   49.1%     OK    │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+Note: Active sessions (RUNNING/—) always appear before completed (DONE) sessions, sorted by token usage within each group.
 
 ### Session Analysis
 

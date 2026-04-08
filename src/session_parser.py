@@ -53,6 +53,7 @@ def parse_sessions_metadata(sessions_file: Path) -> List[Dict[str, Any]]:
             'agent': agent,
             'sessionFile': session_file,
             'startedAt': session_data.get('startedAt'),  # Unix timestamp in milliseconds
+            'status': session_data.get('status'),  # "running", "done", or None
         })
 
     return sessions
