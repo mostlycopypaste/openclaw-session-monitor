@@ -40,6 +40,9 @@ class SessionMonitor:
             logger.warning(f"Agents directory not found: {agents_dir}")
             return
 
+        # Track currently active session IDs from metadata
+        current_session_ids = set()
+
         # Scan all agent directories
         for agent_dir in agents_dir.iterdir():
             if not agent_dir.is_dir():
@@ -63,6 +66,8 @@ class SessionMonitor:
             # Process each active session
             for metadata in sessions_metadata:
                 session_id = metadata['sessionId']
+                current_session_ids.add(session_id)  # Track this session as active
+
                 # sessionFile is an absolute path in real OpenClaw sessions.json
                 session_file = Path(metadata['sessionFile'])
 
@@ -93,3 +98,8 @@ class SessionMonitor:
                 except Exception as e:
                     logger.error(f"Failed to parse session {session_file}: {e}")
                     continue
+
+        # Remove sessions that are no longer in metadata (cleaned up, deleted, etc.)
+        stale_sessions = set(self.sessions.keys()) - current_session_ids
+        for session_id in stale_sessions:
+            del self.sessions[session_id]

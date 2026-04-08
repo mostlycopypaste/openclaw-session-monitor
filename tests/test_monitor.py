@@ -70,3 +70,50 @@ def test_monitor_calculate_total_tokens(tmp_path):
 
     # Should use max (most recent) = 10000, not sum = 55000
     assert monitor.sessions["test-001"].total_tokens == 10000
+
+
+def test_monitor_removes_cleaned_sessions(tmp_path):
+    """Test monitor removes sessions that are no longer in metadata."""
+    agents_dir = tmp_path / "agents" / "main" / "sessions"
+    agents_dir.mkdir(parents=True)
+
+    # Create two session files
+    session1 = agents_dir / "test-001.jsonl"
+    session1.write_text('{"type":"message","message":{"usage":{"totalTokens":1000}}}\n')
+
+    session2 = agents_dir / "test-002.jsonl"
+    session2.write_text('{"type":"message","message":{"usage":{"totalTokens":2000}}}\n')
+
+    # Initial sessions.json with both sessions
+    sessions_file = agents_dir / "sessions.json"
+    sessions_file.write_text(f"""{{
+  "agent:main:test1": {{
+    "sessionId": "test-001",
+    "sessionFile": "{session1}"
+  }},
+  "agent:main:test2": {{
+    "sessionId": "test-002",
+    "sessionFile": "{session2}"
+  }}
+}}""")
+
+    # First discovery - should find both
+    monitor = SessionMonitor(state_dir=tmp_path)
+    monitor.discover_sessions()
+    assert len(monitor.sessions) == 2
+    assert "test-001" in monitor.sessions
+    assert "test-002" in monitor.sessions
+
+    # Simulate cleanup: remove test-001 from sessions.json
+    sessions_file.write_text(f"""{{
+  "agent:main:test2": {{
+    "sessionId": "test-002",
+    "sessionFile": "{session2}"
+  }}
+}}""")
+
+    # Second discovery - should only have test-002, test-001 should be removed
+    monitor.discover_sessions()
+    assert len(monitor.sessions) == 1
+    assert "test-001" not in monitor.sessions
+    assert "test-002" in monitor.sessions
