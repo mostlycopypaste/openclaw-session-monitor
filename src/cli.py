@@ -4,6 +4,7 @@ import sys
 import os
 import argparse
 import time
+import subprocess
 from pathlib import Path
 from src.monitor import SessionMonitor
 from src.dashboard import Dashboard
@@ -49,6 +50,13 @@ def main():
 
     report_parser = metrics_subparsers.add_parser("report", help="Generate weekly report")
 
+    # Cleanup command
+    cleanup_parser = subparsers.add_parser("cleanup", help="Clean up old sessions via OpenClaw")
+    cleanup_parser.add_argument("--dry-run", action="store_true",
+                                help="Preview what would be cleaned without actually cleaning")
+    cleanup_parser.add_argument("--force", action="store_true",
+                                help="Skip confirmation prompt")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -57,6 +65,8 @@ def main():
 
     if args.command == "watch":
         return cmd_watch(args)
+    elif args.command == "cleanup":
+        return cmd_cleanup(args)
     else:
         print(f"Command '{args.command}' not yet implemented.")
         print("See PLAN.md for implementation phases.")
@@ -110,6 +120,45 @@ def cmd_watch(args):
     except KeyboardInterrupt:
         print("\nMonitoring stopped")
         return 0
+
+
+def cmd_cleanup(args):
+    """Execute cleanup command via OpenClaw CLI."""
+    print("Checking for sessions to clean up...")
+    print()
+
+    try:
+        result = subprocess.run(
+            ['openclaw', 'sessions', 'cleanup', '--dry-run', '--all-agents'],
+            capture_output=True,
+            text=True,
+            timeout=30,  # Prevent indefinite hangs
+            check=False
+        )
+    except FileNotFoundError:
+        print("Error: 'openclaw' command not found")
+        print("Make sure OpenClaw CLI is installed and in your PATH")
+        return 1
+    except subprocess.TimeoutExpired:
+        print("Error: OpenClaw cleanup timed out after 30 seconds")
+        return 1
+
+    if result.returncode != 0:
+        print("Error running OpenClaw cleanup:")
+        print(result.stderr)
+        return 1
+
+    # Display preview
+    print(result.stdout)
+    print()
+
+    if args.dry_run:
+        print("Preview only (--dry-run). No sessions were deleted.")
+        return 0
+
+    # For now, just stop at preview - we'll add confirmation in next test
+    print("Cleanup cancelled (confirmation not yet implemented).")
+    return 0
 
 
 if __name__ == "__main__":
