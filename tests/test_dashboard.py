@@ -188,3 +188,15 @@ def test_dashboard_sorts_by_window_percent_within_done_group():
     # Active first, then done sessions sorted by window %
     session_ids = [s["id"] for s in data["sessions"]]
     assert session_ids == ["active", "done-high", "done-low"]
+
+
+def test_dashboard_handles_empty_sessions():
+    """Test dashboard handles empty sessions dict gracefully."""
+    dashboard = Dashboard(test_mode=True)
+
+    output = dashboard.render({})
+    import json
+    data = json.loads(output)
+
+    assert data["sessions"] == []
+    assert data["alerts"] == []
