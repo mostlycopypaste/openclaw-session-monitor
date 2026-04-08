@@ -52,6 +52,7 @@ def main():
 
     # Cleanup command
     cleanup_parser = subparsers.add_parser("cleanup", help="Clean up old sessions via OpenClaw")
+    cleanup_parser.add_argument("--state-dir", help="OpenClaw state directory (default: ~/.openclaw-primary)")
     cleanup_parser.add_argument("--dry-run", action="store_true",
                                 help="Preview what would be cleaned without actually cleaning")
     cleanup_parser.add_argument("--force", action="store_true",
@@ -124,36 +125,74 @@ def cmd_watch(args):
 
 def cmd_cleanup(args):
     """Execute cleanup command via OpenClaw CLI."""
-    print("Checking for sessions to clean up...")
+    # Determine state directory
+    state_dir = args.state_dir
+    if not state_dir:
+        # Try environment variable first
+        state_dir = os.environ.get('OPENCLAW_STATE_DIR')
+        if not state_dir:
+            # Default location
+            state_dir = Path.home() / '.openclaw-primary'
+        else:
+            state_dir = Path(state_dir)
+    else:
+        state_dir = Path(state_dir)
+
+    if not state_dir.exists():
+        print(f"Error: OpenClaw state directory not found: {state_dir}")
+        print("Set OPENCLAW_STATE_DIR environment variable or use --state-dir")
+        return 1
+
+    # Find all agent directories
+    agents_dir = state_dir / 'agents'
+    if not agents_dir.exists():
+        print(f"Error: Agents directory not found: {agents_dir}")
+        return 1
+
+    # Get list of agents
+    agent_dirs = [d for d in agents_dir.iterdir() if d.is_dir() and (d / 'sessions' / 'sessions.json').exists()]
+    if not agent_dirs:
+        print(f"No agents with session stores found in {agents_dir}")
+        return 0
+
+    print(f"Checking sessions in {len(agent_dirs)} agent(s) at {state_dir}")
     print()
 
-    try:
-        result = subprocess.run(
-            ['openclaw', 'sessions', 'cleanup', '--dry-run', '--all-agents'],
-            capture_output=True,
-            text=True,
-            stdin=subprocess.DEVNULL,  # Prevent waiting for input
-            timeout=120,  # Allow up to 2 minutes for large session stores
-            check=False
-        )
-    except FileNotFoundError:
-        print("Error: 'openclaw' command not found")
-        print("Make sure OpenClaw CLI is installed and in your PATH")
-        return 1
-    except subprocess.TimeoutExpired:
-        print("Error: OpenClaw cleanup timed out after 120 seconds")
-        print("This may indicate a problem with the OpenClaw installation.")
-        print("Try running directly: openclaw sessions cleanup --dry-run --all-agents")
-        return 1
+    # Run cleanup for each agent
+    all_output = []
+    for agent_dir in agent_dirs:
+        agent_name = agent_dir.name
+        store_path = agent_dir / 'sessions' / 'sessions.json'
 
-    if result.returncode != 0:
-        print("Error running OpenClaw cleanup:")
-        print(result.stderr)
-        return 1
+        try:
+            result = subprocess.run(
+                ['openclaw', 'sessions', 'cleanup', '--dry-run', '--store', str(store_path)],
+                capture_output=True,
+                text=True,
+                stdin=subprocess.DEVNULL,
+                timeout=120,
+                check=False
+            )
+        except FileNotFoundError:
+            print("Error: 'openclaw' command not found")
+            print("Make sure OpenClaw CLI is installed and in your PATH")
+            return 1
+        except subprocess.TimeoutExpired:
+            print(f"Error: Cleanup timed out for agent '{agent_name}' after 120 seconds")
+            continue
 
-    # Display preview
-    print(result.stdout)
-    print()
+        if result.returncode != 0:
+            print(f"Error running cleanup for agent '{agent_name}':")
+            print(result.stderr)
+            continue
+
+        # Store output for display and enforcement
+        all_output.append((agent_name, store_path, result.stdout))
+        print(result.stdout)
+
+    if not all_output:
+        print("No sessions to clean up.")
+        return 0
 
     if args.dry_run:
         print("Preview only (--dry-run). No sessions were deleted.")
@@ -166,37 +205,36 @@ def cmd_cleanup(args):
             print("Cleanup cancelled.")
             return 0
 
-    # Run actual cleanup
+    # Run actual cleanup for each agent
     print("Cleaning up sessions...")
     print()
 
-    try:
-        result = subprocess.run(
-            ['openclaw', 'sessions', 'cleanup', '--enforce', '--all-agents'],
-            capture_output=True,
-            text=True,
-            stdin=subprocess.DEVNULL,  # Prevent waiting for input
-            timeout=120,
-            check=False
-        )
-    except FileNotFoundError:
-        print("Error: 'openclaw' command not found")
-        return 1
-    except subprocess.TimeoutExpired:
-        print("Error: OpenClaw cleanup timed out after 120 seconds")
-        print("This may indicate a problem with the OpenClaw installation.")
-        return 1
+    for agent_name, store_path, _ in all_output:
+        try:
+            result = subprocess.run(
+                ['openclaw', 'sessions', 'cleanup', '--enforce', '--store', str(store_path)],
+                capture_output=True,
+                text=True,
+                stdin=subprocess.DEVNULL,
+                timeout=120,
+                check=False
+            )
+        except FileNotFoundError:
+            print("Error: 'openclaw' command not found")
+            return 1
+        except subprocess.TimeoutExpired:
+            print(f"Error: Cleanup timed out for agent '{agent_name}' after 120 seconds")
+            continue
 
-    if result.returncode != 0:
-        print("Error during cleanup:")
-        print(result.stderr)
-        return 1
+        if result.returncode != 0:
+            print(f"Error during cleanup for agent '{agent_name}':")
+            print(result.stderr)
+            continue
 
-    # Display results
-    print(result.stdout)
+        print(result.stdout)
+
     print()
     print("Cleanup complete!")
-
     return 0
 
 
