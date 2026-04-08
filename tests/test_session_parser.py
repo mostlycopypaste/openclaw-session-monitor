@@ -134,3 +134,24 @@ def test_parse_session_messages_incremental(tmp_path):
     assert len(new_messages) == 1
     assert new_messages[0]["tokens"] == 3000
     assert new_pos > pos  # Position advanced
+
+
+def test_parse_sessions_metadata_extracts_status_running(tmp_path):
+    """Test parser extracts status='running' from sessions.json."""
+    # Create session file
+    session_file = tmp_path / "test-001.jsonl"
+    session_file.write_text('{"type":"message","message":{"usage":{"totalTokens":100}}}\n')
+
+    sessions_file = tmp_path / "sessions.json"
+    sessions_file.write_text(f"""{{
+  "agent:main:test": {{
+    "sessionId": "test-001",
+    "sessionFile": "{session_file}",
+    "status": "running"
+  }}
+}}""")
+
+    sessions = parse_sessions_metadata(sessions_file)
+
+    assert len(sessions) == 1
+    assert sessions[0]["status"] == "running"
