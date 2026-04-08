@@ -108,3 +108,83 @@ def test_dashboard_sorts_active_sessions_before_done():
     # Both running and null should come before done
     assert running_index < done_index
     assert null_index < done_index
+
+
+def test_dashboard_sorts_by_window_percent_within_active_group():
+    """Test dashboard sorts active sessions by window % descending."""
+    dashboard = Dashboard(test_mode=True)
+
+    sessions = {
+        "low": Session(
+            session_id="low",
+            label="low:usage",
+            agent="main",
+            total_tokens=50000,  # 25%
+            context_limit=200000,
+            status="running"
+        ),
+        "high": Session(
+            session_id="high",
+            label="high:usage",
+            agent="main",
+            total_tokens=180000,  # 90%
+            context_limit=200000,
+            status="running"
+        ),
+        "med": Session(
+            session_id="med",
+            label="med:usage",
+            agent="main",
+            total_tokens=100000,  # 50%
+            context_limit=200000,
+            status=None  # Also active
+        )
+    }
+
+    output = dashboard.render(sessions)
+    import json
+    data = json.loads(output)
+
+    # Should be ordered: high (90%), med (50%), low (25%)
+    session_ids = [s["id"] for s in data["sessions"]]
+    assert session_ids == ["high", "med", "low"]
+
+
+def test_dashboard_sorts_by_window_percent_within_done_group():
+    """Test dashboard sorts done sessions by window % descending."""
+    dashboard = Dashboard(test_mode=True)
+
+    sessions = {
+        "done-low": Session(
+            session_id="done-low",
+            label="done:low",
+            agent="main",
+            total_tokens=30000,  # 15%
+            context_limit=200000,
+            status="done"
+        ),
+        "done-high": Session(
+            session_id="done-high",
+            label="done:high",
+            agent="main",
+            total_tokens=150000,  # 75%
+            context_limit=200000,
+            status="done"
+        ),
+        "active": Session(
+            session_id="active",
+            label="active:session",
+            agent="main",
+            total_tokens=40000,  # 20%
+            context_limit=200000,
+            status="running"
+        )
+    }
+
+    output = dashboard.render(sessions)
+    import json
+    data = json.loads(output)
+
+    # Active first, then done sessions sorted by window %
+    session_ids = [s["id"] for s in data["sessions"]]
+    assert session_ids == ["active", "done-high", "done-low"]
