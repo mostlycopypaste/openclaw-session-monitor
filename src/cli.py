@@ -156,8 +156,42 @@ def cmd_cleanup(args):
         print("Preview only (--dry-run). No sessions were deleted.")
         return 0
 
-    # For now, just stop at preview - we'll add confirmation in next test
-    print("Cleanup cancelled (confirmation not yet implemented).")
+    # Confirm with user (unless --force)
+    if not args.force:
+        response = input("Proceed with cleanup? (y/N): ").strip().lower()
+        if response not in ['y', 'yes']:
+            print("Cleanup cancelled.")
+            return 0
+
+    # Run actual cleanup
+    print("Cleaning up sessions...")
+    print()
+
+    try:
+        result = subprocess.run(
+            ['openclaw', 'sessions', 'cleanup', '--enforce', '--all-agents'],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False
+        )
+    except FileNotFoundError:
+        print("Error: 'openclaw' command not found")
+        return 1
+    except subprocess.TimeoutExpired:
+        print("Error: OpenClaw cleanup timed out after 30 seconds")
+        return 1
+
+    if result.returncode != 0:
+        print("Error during cleanup:")
+        print(result.stderr)
+        return 1
+
+    # Display results
+    print(result.stdout)
+    print()
+    print("Cleanup complete!")
+
     return 0
 
 

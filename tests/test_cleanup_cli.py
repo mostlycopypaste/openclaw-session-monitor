@@ -27,3 +27,24 @@ def test_cleanup_command_dry_run_calls_openclaw():
         assert args[1]['text'] == True
         assert args[1]['timeout'] == 30  # Prevent hangs
         assert result == 0
+
+
+def test_cleanup_command_interactive_confirmation_yes(monkeypatch):
+    """Test cleanup with interactive confirmation (user says yes)."""
+    with patch('subprocess.run') as mock_run:
+        mock_run.side_effect = [
+            MagicMock(returncode=0, stdout="Would prune 5 sessions", stderr=""),
+            MagicMock(returncode=0, stdout="Pruned 5 sessions", stderr="")
+        ]
+
+        # Mock input to return 'y'
+        monkeypatch.setattr('builtins.input', lambda _: 'y')
+
+        with patch('sys.argv', ['session-monitor', 'cleanup']):
+            result = main()
+
+        # Should call twice: preview then enforce
+        assert mock_run.call_count == 2
+        # Second call should use --enforce
+        assert '--enforce' in mock_run.call_args_list[1][0][0]
+        assert result == 0
