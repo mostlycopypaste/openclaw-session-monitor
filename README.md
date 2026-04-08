@@ -95,6 +95,42 @@ session-monitor metrics view --days 7
 session-monitor metrics report
 ```
 
+### Cleanup Old Sessions
+
+Clean up old registered sessions using OpenClaw's native cleanup mechanism:
+
+```bash
+# Preview what would be cleaned (no changes made)
+session-monitor cleanup --dry-run
+
+# Interactive cleanup with confirmation
+session-monitor cleanup
+
+# Force cleanup without confirmation
+session-monitor cleanup --force
+```
+
+**How it works:**
+- Delegates to OpenClaw's `openclaw sessions cleanup --all-agents` command
+- Always shows preview before deleting
+- Cleans sessions registered in sessions.json according to OpenClaw's maintenance configuration
+- Respects OpenClaw's session lifecycle and internal criteria
+
+**What gets cleaned:**
+- Registered sessions tracked in sessions.json across all agents (main, claude, etc.)
+- Sessions selected by OpenClaw's maintenance settings
+
+**What does NOT get cleaned:**
+- Orphaned .jsonl files not tracked in sessions.json (would require custom file scanning - out of scope)
+
+**Configuration:**
+OpenClaw determines which sessions to clean based on its maintenance settings in `openclaw.json`. To configure retention policies, see OpenClaw's documentation for maintenance configuration options.
+
+**Note:** 
+- This command is a convenience wrapper providing preview and confirmation
+- You can also run `openclaw sessions cleanup --enforce --all-agents` directly
+- If OpenClaw reports "0 sessions to prune", your maintenance config may need adjustment
+
 ## Configuration
 
 Create `~/.openclaw/monitor-config.json`:
