@@ -155,3 +155,58 @@ def test_parse_sessions_metadata_extracts_status_running(tmp_path):
 
     assert len(sessions) == 1
     assert sessions[0]["status"] == "running"
+
+
+def test_parse_sessions_metadata_extracts_status_done(tmp_path):
+    """Test parser extracts status='done' from sessions.json."""
+    session_file = tmp_path / "test-001.jsonl"
+    session_file.write_text('{"type":"message","message":{"usage":{"totalTokens":100}}}\n')
+
+    sessions_file = tmp_path / "sessions.json"
+    sessions_file.write_text(f"""{{
+  "agent:main:test": {{
+    "sessionId": "test-001",
+    "sessionFile": "{session_file}",
+    "status": "done"
+  }}
+}}""")
+
+    sessions = parse_sessions_metadata(sessions_file)
+    assert sessions[0]["status"] == "done"
+
+
+def test_parse_sessions_metadata_status_null(tmp_path):
+    """Test parser handles status=null in sessions.json."""
+    session_file = tmp_path / "test-001.jsonl"
+    session_file.write_text('{"type":"message","message":{"usage":{"totalTokens":100}}}\n')
+
+    sessions_file = tmp_path / "sessions.json"
+    sessions_file.write_text(f"""{{
+  "agent:main:test": {{
+    "sessionId": "test-001",
+    "sessionFile": "{session_file}",
+    "status": null
+  }}
+}}""")
+
+    sessions = parse_sessions_metadata(sessions_file)
+    # JSON null becomes Python None
+    assert sessions[0]["status"] is None
+
+
+def test_parse_sessions_metadata_status_missing(tmp_path):
+    """Test parser handles missing status field in sessions.json."""
+    session_file = tmp_path / "test-001.jsonl"
+    session_file.write_text('{"type":"message","message":{"usage":{"totalTokens":100}}}\n')
+
+    sessions_file = tmp_path / "sessions.json"
+    sessions_file.write_text(f"""{{
+  "agent:main:test": {{
+    "sessionId": "test-001",
+    "sessionFile": "{session_file}"
+  }}
+}}""")
+
+    sessions = parse_sessions_metadata(sessions_file)
+    # Missing field returns None via .get()
+    assert sessions[0]["status"] is None
