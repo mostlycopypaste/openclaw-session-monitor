@@ -148,13 +148,79 @@ session-monitor cleanup --state-dir ~/.openclaw-custom --dry-run
 **What does NOT get cleaned:**
 - Orphaned .jsonl files not tracked in sessions.json (would require custom file scanning - out of scope)
 
-**Configuration:**
-OpenClaw determines which sessions to clean based on its maintenance settings in `openclaw.json`. To configure retention policies, see OpenClaw's documentation for maintenance configuration options.
+### Configuring Session Maintenance
+
+OpenClaw's cleanup is controlled by maintenance settings in your OpenClaw configuration. **You must configure these settings first** before cleanup will remove any sessions.
+
+#### Recommended Settings
+
+For typical usage, we recommend:
+- **Age retention**: 5 days
+- **Max entries**: 100 sessions
+
+These settings keep recent history available while preventing unbounded growth.
+
+#### Enable Maintenance
+
+```bash
+# Set maintenance mode to "enforce" (required - default is "warn" which only reports)
+openclaw config set session.maintenance.mode enforce
+
+# Remove sessions older than 5 days
+openclaw config set session.maintenance.pruneAfter 5d
+
+# Cap total sessions at 100 (removes oldest when exceeded)
+openclaw config set session.maintenance.maxEntries 100
+```
+
+#### Verify Configuration
+
+```bash
+openclaw config get session.maintenance
+```
+
+Expected output:
+```json
+{
+  "mode": "enforce",
+  "pruneAfter": "5d",
+  "maxEntries": 100
+}
+```
+
+#### Test Your Settings
+
+After configuring, test with a dry-run:
+```bash
+session-monitor cleanup --dry-run
+```
+
+You should now see sessions identified for removal.
+
+#### Maintenance Modes
+
+- **`warn`** (default): Only reports what would be cleaned, never deletes
+- **`enforce`**: Actually deletes sessions matching criteria
+
+Start with `warn` mode to preview behavior, then switch to `enforce` when ready.
+
+#### Other Settings
+
+```bash
+# Different age retention (examples)
+openclaw config set session.maintenance.pruneAfter 7d   # Keep 7 days
+openclaw config set session.maintenance.pruneAfter 30d  # Keep 30 days
+openclaw config set session.maintenance.pruneAfter 12h  # Keep 12 hours
+
+# Different entry limits
+openclaw config set session.maintenance.maxEntries 50   # Limit to 50
+openclaw config set session.maintenance.maxEntries 200  # Limit to 200
+```
 
 **Note:** 
-- This command is a convenience wrapper providing preview and confirmation
+- Maintenance settings are **global** - they apply to all agents (main, claude, rescue, etc.)
 - You can also run `openclaw sessions cleanup --enforce --all-agents` directly
-- If OpenClaw reports "0 sessions to prune", your maintenance config may need adjustment
+- If cleanup reports "0 sessions to prune", check your maintenance configuration
 
 ## Configuration
 
