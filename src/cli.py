@@ -132,7 +132,8 @@ def cmd_cleanup(args):
             ['openclaw', 'sessions', 'cleanup', '--dry-run', '--all-agents'],
             capture_output=True,
             text=True,
-            timeout=30,  # Prevent indefinite hangs
+            stdin=subprocess.DEVNULL,  # Prevent waiting for input
+            timeout=120,  # Allow up to 2 minutes for large session stores
             check=False
         )
     except FileNotFoundError:
@@ -140,7 +141,9 @@ def cmd_cleanup(args):
         print("Make sure OpenClaw CLI is installed and in your PATH")
         return 1
     except subprocess.TimeoutExpired:
-        print("Error: OpenClaw cleanup timed out after 30 seconds")
+        print("Error: OpenClaw cleanup timed out after 120 seconds")
+        print("This may indicate a problem with the OpenClaw installation.")
+        print("Try running directly: openclaw sessions cleanup --dry-run --all-agents")
         return 1
 
     if result.returncode != 0:
@@ -172,14 +175,16 @@ def cmd_cleanup(args):
             ['openclaw', 'sessions', 'cleanup', '--enforce', '--all-agents'],
             capture_output=True,
             text=True,
-            timeout=30,
+            stdin=subprocess.DEVNULL,  # Prevent waiting for input
+            timeout=120,
             check=False
         )
     except FileNotFoundError:
         print("Error: 'openclaw' command not found")
         return 1
     except subprocess.TimeoutExpired:
-        print("Error: OpenClaw cleanup timed out after 30 seconds")
+        print("Error: OpenClaw cleanup timed out after 120 seconds")
+        print("This may indicate a problem with the OpenClaw installation.")
         return 1
 
     if result.returncode != 0:
