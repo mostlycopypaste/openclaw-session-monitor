@@ -14,6 +14,7 @@ class Session:
     agent: str
     total_tokens: int
     created_at: Optional[int] = None  # Unix timestamp in milliseconds
+    status: Optional[str] = None  # "running", "done", or None (treated as running)
     context_limit: int = 200000
 
     @property

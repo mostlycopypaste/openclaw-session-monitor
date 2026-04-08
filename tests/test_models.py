@@ -307,3 +307,14 @@ def test_format_age_edge_case_exactly_86400_seconds():
         )
 
         assert session.format_age() == "1d"
+
+
+def test_session_status_defaults_to_none():
+    """Test Session status field defaults to None when not provided."""
+    session = Session(
+        session_id="test",
+        label="test:label",
+        agent="main",
+        total_tokens=10000
+    )
+    assert session.status is None
