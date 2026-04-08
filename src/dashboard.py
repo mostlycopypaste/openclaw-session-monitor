@@ -27,6 +27,25 @@ class Dashboard:
         self.test_mode = test_mode
         self.console = Console() if not test_mode else None
 
+    def _format_status_display(self, status: str | None) -> tuple[str, str]:
+        """
+        Format status value for display.
+
+        Args:
+            status: Session status ("running", "done", or None)
+
+        Returns:
+            Tuple of (display_text, style)
+        """
+        if status == "done":
+            return ("DONE", "dim")
+        elif status == "running":
+            return ("RUNNING", "green")
+        elif status is None:
+            return ("—", "dim")  # Em dash for null
+        else:
+            return (str(status), "white")  # Fallback
+
     def render(self, sessions: Dict[str, Session]) -> str:
         """
         Render dashboard for current sessions.
@@ -50,12 +69,20 @@ class Dashboard:
         }
 
         for session_id, session in sessions.items():
+            # Determine display status
+            if session.status == "done":
+                display_status = "done"
+            elif session.status == "running" or session.status is None:
+                display_status = "running"
+            else:
+                display_status = session.status  # Fallback for unknown values
+
             output["sessions"].append({
                 "id": session.session_id,
                 "label": session.label,
                 "tokens": session.total_tokens,
                 "window_percent": round(session.window_percent, 1),
-                "status": "active",
+                "session_status": display_status,  # New field
                 "alert_level": session.alert_level
             })
 
@@ -83,6 +110,7 @@ class Dashboard:
         table = Table(title=title, show_header=True)
         table.add_column("Session ID", style="cyan")
         table.add_column("Label", style="white")
+        table.add_column("Status", justify="center", style="dim")  # New column
         table.add_column("Age", justify="right", style="dim")
         table.add_column("Tokens", justify="right", style="yellow")
         table.add_column("Window %", justify="right")
@@ -116,9 +144,12 @@ class Dashboard:
             else:
                 percent_style = "green"
 
+            status_display, status_style = self._format_status_display(session.status)
+
             table.add_row(
                 session.session_id[:12],
                 session.label,
+                f"[{status_style}]{status_display}[/{status_style}]",
                 session.format_age(),
                 f"{session.total_tokens:,}",
                 f"[{percent_style}]{percent:.1f}%[/{percent_style}]",
