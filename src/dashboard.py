@@ -68,7 +68,15 @@ class Dashboard:
             "alerts": []
         }
 
-        for session_id, session in sessions.items():
+        # Apply same sorting as rich UI
+        def sort_key(session: Session) -> tuple[int, float]:
+            is_done = 1 if session.status == "done" else 0
+            window_pct = -session.window_percent
+            return (is_done, window_pct)
+
+        sorted_sessions = sorted(sessions.values(), key=sort_key)
+
+        for session in sorted_sessions:
             # Determine display status
             if session.status == "done":
                 display_status = "done"
@@ -116,12 +124,15 @@ class Dashboard:
         table.add_column("Window %", justify="right")
         table.add_column("Alert", style="bold")
 
-        # Sort by window percent descending (highest usage first)
-        sorted_sessions = sorted(
-            sessions.values(),
-            key=lambda s: s.window_percent,
-            reverse=True
-        )
+        # Sort by: 1) active status (running/null) before done, 2) window % descending
+        def sort_key(session: Session) -> tuple[int, float]:
+            # Primary: active (0) before done (1)
+            is_done = 1 if session.status == "done" else 0
+            # Secondary: window % descending (negate for desc order)
+            window_pct = -session.window_percent
+            return (is_done, window_pct)
+
+        sorted_sessions = sorted(sessions.values(), key=sort_key)
 
         for session in sorted_sessions:
             # Determine alert color
