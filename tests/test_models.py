@@ -318,3 +318,28 @@ def test_session_status_defaults_to_none():
         total_tokens=10000
     )
     assert session.status is None
+
+
+def test_session_status_display_running():
+    """Test Session with status='running' displays as RUNNING."""
+    session = Session(
+        session_id="test",
+        label="test:label",
+        agent="main",
+        total_tokens=10000,
+        status="running"
+    )
+    assert session.status == "running"
+    # Display logic will be in dashboard, but we verify storage here
+
+
+def test_session_status_display_done():
+    """Test Session with status='done' displays as DONE."""
+    session = Session(
+        session_id="test",
+        label="test:label",
+        agent="main",
+        total_tokens=10000,
+        status="done"
+    )
+    assert session.status == "done"
