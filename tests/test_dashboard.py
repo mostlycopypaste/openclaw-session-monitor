@@ -200,3 +200,53 @@ def test_dashboard_handles_empty_sessions():
 
     assert data["sessions"] == []
     assert data["alerts"] == []
+
+
+def test_dashboard_truncates_long_labels():
+    """Test dashboard truncates labels longer than 40 characters."""
+    dashboard = Dashboard(test_mode=True)
+
+    # Create session with very long label
+    long_label = "agent:main:this-is-a-very-long-label-that-should-be-truncated-for-display"
+    sessions = {
+        "test-001": Session(
+            session_id="test-001",
+            label=long_label,
+            agent="main",
+            total_tokens=50000,
+            context_limit=200000,
+            status="running"
+        )
+    }
+
+    output = dashboard.render(sessions)
+    import json
+    data = json.loads(output)
+
+    # Label should be truncated to 40 chars with ellipsis
+    assert len(data["sessions"][0]["label"]) == 40
+    assert data["sessions"][0]["label"].endswith("...")
+    assert data["sessions"][0]["label"] == long_label[:37] + "..."
+
+
+def test_dashboard_preserves_short_labels():
+    """Test dashboard does not truncate labels shorter than 40 characters."""
+    dashboard = Dashboard(test_mode=True)
+
+    short_label = "agent:main:short"
+    sessions = {
+        "test-001": Session(
+            session_id="test-001",
+            label=short_label,
+            agent="main",
+            total_tokens=50000,
+            context_limit=200000
+        )
+    }
+
+    output = dashboard.render(sessions)
+    import json
+    data = json.loads(output)
+
+    # Short label should be unchanged
+    assert data["sessions"][0]["label"] == short_label

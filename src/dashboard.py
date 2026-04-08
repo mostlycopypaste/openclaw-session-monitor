@@ -46,6 +46,21 @@ class Dashboard:
         else:
             return (str(status), "white")  # Fallback
 
+    def _truncate_label(self, label: str, max_length: int = 40) -> str:
+        """
+        Truncate label to max length with ellipsis.
+
+        Args:
+            label: Session label to truncate
+            max_length: Maximum length before truncation (default: 40)
+
+        Returns:
+            Truncated label with "..." if too long
+        """
+        if len(label) <= max_length:
+            return label
+        return label[:max_length - 3] + "..."
+
     def render(self, sessions: Dict[str, Session]) -> str:
         """
         Render dashboard for current sessions.
@@ -87,7 +102,7 @@ class Dashboard:
 
             output["sessions"].append({
                 "id": session.session_id,
-                "label": session.label,
+                "label": self._truncate_label(session.label),
                 "tokens": session.total_tokens,
                 "window_percent": round(session.window_percent, 1),
                 "session_status": display_status,  # New field
@@ -159,7 +174,7 @@ class Dashboard:
 
             table.add_row(
                 session.session_id[:12],
-                session.label,
+                self._truncate_label(session.label),
                 f"[{status_style}]{status_display}[/{status_style}]",
                 session.format_age(),
                 f"{session.total_tokens:,}",
