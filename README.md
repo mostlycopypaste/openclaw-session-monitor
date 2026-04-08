@@ -128,13 +128,18 @@ session-monitor cleanup
 
 # Force cleanup without confirmation
 session-monitor cleanup --force
+
+# Specify custom OpenClaw state directory
+session-monitor cleanup --state-dir ~/.openclaw-custom --dry-run
 ```
 
 **How it works:**
-- Delegates to OpenClaw's `openclaw sessions cleanup --all-agents` command
+- Discovers all agents in OpenClaw state directory (default: `~/.openclaw-primary`)
+- Delegates to OpenClaw's `openclaw sessions cleanup` for each agent
 - Always shows preview before deleting
 - Cleans sessions registered in sessions.json according to OpenClaw's maintenance configuration
 - Respects OpenClaw's session lifecycle and internal criteria
+- Uses same `--state-dir` as watch command for consistency
 
 **What gets cleaned:**
 - Registered sessions tracked in sessions.json across all agents (main, claude, etc.)
