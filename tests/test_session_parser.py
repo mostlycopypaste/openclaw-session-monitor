@@ -210,3 +210,44 @@ def test_parse_sessions_metadata_status_missing(tmp_path):
     sessions = parse_sessions_metadata(sessions_file)
     # Missing field returns None via .get()
     assert sessions[0]["status"] is None
+
+
+def test_parse_sessions_metadata_extracts_model(tmp_path):
+    """Test parser extracts model field from sessions.json."""
+    session_file = tmp_path / "test-001.jsonl"
+    session_file.write_text('{"type":"message","message":{"usage":{"totalTokens":100}}}\n')
+
+    sessions_file = tmp_path / "sessions.json"
+    sessions_file.write_text(f"""{{
+  "agent:main:test": {{
+    "sessionId": "test-001",
+    "sessionFile": "{session_file}",
+    "status": "running",
+    "model": "kimi-k2.5:cloud"
+  }}
+}}""")
+
+    sessions = parse_sessions_metadata(sessions_file)
+
+    assert len(sessions) == 1
+    assert sessions[0]["model"] == "kimi-k2.5:cloud"
+
+
+def test_parse_sessions_metadata_model_missing(tmp_path):
+    """Test parser handles missing model field."""
+    session_file = tmp_path / "test-001.jsonl"
+    session_file.write_text('{"type":"message","message":{"usage":{"totalTokens":100}}}\n')
+
+    sessions_file = tmp_path / "sessions.json"
+    sessions_file.write_text(f"""{{
+  "agent:main:test": {{
+    "sessionId": "test-001",
+    "sessionFile": "{session_file}",
+    "status": "running"
+  }}
+}}""")
+
+    sessions = parse_sessions_metadata(sessions_file)
+
+    assert len(sessions) == 1
+    assert sessions[0]["model"] is None
