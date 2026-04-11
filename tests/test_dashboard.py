@@ -250,3 +250,74 @@ def test_dashboard_preserves_short_labels():
 
     # Short label should be unchanged
     assert data["sessions"][0]["label"] == short_label
+
+
+def test_dashboard_displays_model_column():
+    """Test dashboard includes model in JSON output."""
+    import json
+
+    dashboard = Dashboard(test_mode=True)
+    sessions = {
+        "test-123": Session(
+            session_id="test-123",
+            label="agent:main:test",
+            agent="main",
+            total_tokens=50000,
+            model="kimi-k2.5:cloud"
+        )
+    }
+
+    output = dashboard.render(sessions)
+    data = json.loads(output)
+
+    # Check that session has model field
+    assert "model" in data["sessions"][0]
+    assert data["sessions"][0]["model"] == "kimi-k2.5:cloud"
+
+
+def test_dashboard_truncates_long_model_names():
+    """Test dashboard truncates model names longer than 20 characters."""
+    import json
+
+    dashboard = Dashboard(test_mode=True)
+    long_model = "ollama/very-long-model-name-that-needs-truncation:latest"
+    sessions = {
+        "test-123": Session(
+            session_id="test-123",
+            label="agent:main:test",
+            agent="main",
+            total_tokens=50000,
+            model=long_model
+        )
+    }
+
+    output = dashboard.render(sessions)
+    data = json.loads(output)
+
+    # Model should be truncated to 20 chars total (17 chars + "...")
+    model_value = data["sessions"][0]["model"]
+    assert len(model_value) == 20
+    assert model_value.endswith("...")
+    assert model_value == long_model[:17] + "..."
+
+
+def test_dashboard_handles_null_model():
+    """Test dashboard displays placeholder for None model."""
+    import json
+
+    dashboard = Dashboard(test_mode=True)
+    sessions = {
+        "test-123": Session(
+            session_id="test-123",
+            label="agent:main:test",
+            agent="main",
+            total_tokens=50000,
+            model=None
+        )
+    }
+
+    output = dashboard.render(sessions)
+    data = json.loads(output)
+
+    # Model field should be None in JSON output
+    assert data["sessions"][0]["model"] is None
