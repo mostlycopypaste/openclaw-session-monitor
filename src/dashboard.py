@@ -61,6 +61,25 @@ class Dashboard:
             return label
         return label[:max_length - 3] + "..."
 
+    def _format_model(self, model: str | None, max_length: int = 20) -> str:
+        """
+        Format model name for display.
+
+        Args:
+            model: Model identifier (e.g., "kimi-k2.5:cloud")
+            max_length: Maximum length before truncation (default: 20)
+
+        Returns:
+            Formatted model name, truncated with "..." if too long, or "—" if None
+        """
+        if model is None:
+            return "—"
+
+        if len(model) <= max_length:
+            return model
+
+        return model[:max_length - 3] + "..."
+
     def render(self, sessions: Dict[str, Session]) -> str:
         """
         Render dashboard for current sessions.
@@ -100,9 +119,13 @@ class Dashboard:
             else:
                 display_status = session.status  # Fallback for unknown values
 
+            # Format model for JSON output (truncate but preserve None)
+            model_value = None if session.model is None else self._format_model(session.model)
+
             output["sessions"].append({
                 "id": session.session_id,
                 "label": self._truncate_label(session.label),
+                "model": model_value,
                 "tokens": session.total_tokens,
                 "window_percent": round(session.window_percent, 1),
                 "session_status": display_status,  # New field
@@ -133,7 +156,8 @@ class Dashboard:
         table = Table(title=title, show_header=True)
         table.add_column("Session ID", style="cyan")
         table.add_column("Label", style="white")
-        table.add_column("Status", justify="center", style="dim")  # New column
+        table.add_column("Model", style="magenta")  # New column
+        table.add_column("Status", justify="center", style="dim")
         table.add_column("Age", justify="right", style="dim")
         table.add_column("Tokens", justify="right", style="yellow")
         table.add_column("Window %", justify="right")
@@ -175,6 +199,7 @@ class Dashboard:
             table.add_row(
                 session.session_id[:12],
                 self._truncate_label(session.label),
+                self._format_model(session.model),  # New field
                 f"[{status_style}]{status_display}[/{status_style}]",
                 session.format_age(),
                 f"{session.total_tokens:,}",
