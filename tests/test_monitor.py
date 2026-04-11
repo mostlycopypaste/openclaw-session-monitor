@@ -117,3 +117,72 @@ def test_monitor_removes_cleaned_sessions(tmp_path):
     assert len(monitor.sessions) == 1
     assert "test-001" not in monitor.sessions
     assert "test-002" in monitor.sessions
+
+
+def test_monitor_includes_model_in_session(tmp_path):
+    """Test monitor passes model from metadata to Session object."""
+    # Setup
+    state_dir = tmp_path / ".openclaw-primary"
+    agent_dir = state_dir / "agents" / "main"
+    sessions_dir = agent_dir / "sessions"
+    sessions_dir.mkdir(parents=True)
+
+    # Create session file
+    session_file = sessions_dir / "test-123.jsonl"
+    session_file.write_text(
+        '{"type":"message","role":"user","message":{"usage":{"totalTokens":5000}}}\n'
+    )
+
+    # Create sessions.json with model
+    sessions_json = sessions_dir / "sessions.json"
+    sessions_json.write_text(f"""{{
+  "agent:main:test": {{
+    "sessionId": "test-123",
+    "sessionFile": "{session_file}",
+    "status": "running",
+    "model": "kimi-k2.5:cloud"
+  }}
+}}""")
+
+    # Execute
+    monitor = SessionMonitor(state_dir)
+    monitor.discover_sessions()
+
+    # Verify
+    assert len(monitor.sessions) == 1
+    session = monitor.sessions["test-123"]
+    assert session.model == "kimi-k2.5:cloud"
+
+
+def test_monitor_handles_missing_model(tmp_path):
+    """Test monitor handles sessions without model field."""
+    # Setup
+    state_dir = tmp_path / ".openclaw-primary"
+    agent_dir = state_dir / "agents" / "main"
+    sessions_dir = agent_dir / "sessions"
+    sessions_dir.mkdir(parents=True)
+
+    # Create session file
+    session_file = sessions_dir / "test-123.jsonl"
+    session_file.write_text(
+        '{"type":"message","role":"user","message":{"usage":{"totalTokens":5000}}}\n'
+    )
+
+    # Create sessions.json without model
+    sessions_json = sessions_dir / "sessions.json"
+    sessions_json.write_text(f"""{{
+  "agent:main:test": {{
+    "sessionId": "test-123",
+    "sessionFile": "{session_file}",
+    "status": "running"
+  }}
+}}""")
+
+    # Execute
+    monitor = SessionMonitor(state_dir)
+    monitor.discover_sessions()
+
+    # Verify
+    assert len(monitor.sessions) == 1
+    session = monitor.sessions["test-123"]
+    assert session.model is None

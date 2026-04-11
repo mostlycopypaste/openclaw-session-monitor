@@ -90,6 +90,7 @@ class SessionMonitor:
                         total_tokens=total_tokens,
                         created_at=metadata.get('startedAt'),
                         status=metadata.get('status'),
+                        model=metadata.get('model'),
                         context_limit=self.context_limit
                     )
 
