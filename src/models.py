@@ -15,6 +15,7 @@ class Session:
     total_tokens: int
     created_at: Optional[int] = None  # Unix timestamp in milliseconds
     status: Optional[str] = None  # "running", "done", or None (treated as running)
+    model: Optional[str] = None  # Model identifier (e.g., "kimi-k2.5:cloud")
     context_limit: int = 200000
 
     @property

@@ -343,3 +343,28 @@ def test_session_status_display_done():
         status="done"
     )
     assert session.status == "done"
+
+
+def test_session_with_model():
+    """Test Session includes model field."""
+    session = Session(
+        session_id="test-123",
+        label="agent:main:test",
+        agent="main",
+        total_tokens=50000,
+        model="kimi-k2.5:cloud"
+    )
+
+    assert session.model == "kimi-k2.5:cloud"
+
+
+def test_session_model_defaults_to_none():
+    """Test Session model field defaults to None when not provided."""
+    session = Session(
+        session_id="test-123",
+        label="agent:main:test",
+        agent="main",
+        total_tokens=50000
+    )
+
+    assert session.model is None
