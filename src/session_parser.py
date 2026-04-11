@@ -54,6 +54,7 @@ def parse_sessions_metadata(sessions_file: Path) -> List[Dict[str, Any]]:
             'sessionFile': session_file,
             'startedAt': session_data.get('startedAt'),  # Unix timestamp in milliseconds
             'status': session_data.get('status'),  # "running", "done", or None
+            'model': session_data.get('model'),  # Model identifier (e.g., "kimi-k2.5:cloud")
         })
 
     return sessions
